@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
 function ChatPage() {
-
   const [userId, setUserId] =
     useState("demo-user");
 
@@ -11,6 +10,24 @@ function ChatPage() {
 
   const [messages, setMessages] =
     useState([]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [userId]);
+
+  const loadHistory = async () => {
+    try {
+      const response =
+        await api.get(
+          `/chat/${userId}/history`
+        );
+
+      setMessages(response.data);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const sendMessage = async () => {
 
@@ -23,19 +40,15 @@ function ChatPage() {
       const response =
         await api.post(
           `/chat/${userId}`,
-          {
-            message
-          }
+          { message }
         );
 
       setMessages((prev) => [
         ...prev,
-
         {
           role: "user",
           content: message
         },
-
         {
           role: "assistant",
           content:
@@ -48,9 +61,7 @@ function ChatPage() {
       setMessage("");
 
     } catch (err) {
-
       console.error(err);
-
     }
   };
 
@@ -69,9 +80,7 @@ function ChatPage() {
       <input
         value={userId}
         onChange={(e) =>
-          setUserId(
-            e.target.value
-          )
+          setUserId(e.target.value)
         }
         placeholder="User ID"
       />
@@ -119,13 +128,11 @@ function ChatPage() {
                 </h4>
 
                 <pre>
-                  {
-                    JSON.stringify(
-                      msg.eval,
-                      null,
-                      2
-                    )
-                  }
+                  {JSON.stringify(
+                    msg.eval,
+                    null,
+                    2
+                  )}
                 </pre>
               </>
             )}
