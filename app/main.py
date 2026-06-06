@@ -2,27 +2,27 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import (
     CORSMiddleware
 )
-from app.tools.search_catalog import (
+from tools.search_catalog import (
     initialize_catalog_search
 )
-from app.db.database import (
+from db.database import (
     Base,
     engine
 )
 
-from app.api.chat import (
+from api.chat import (
     router as chat_router
 )
 
-from app.api.catalog import (
+from api.catalog import (
     router as catalog_router
 )
 
-from app.api.health import (
+from api.health import (
     router as health_router
 )
 
-from app.api.evals import (
+from api.evals import (
     router as eval_router
 )
 
