@@ -1,0 +1,23 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+
+class Settings:
+
+    GROQ_API_KEY = os.getenv(
+        "GROQ_API_KEY"
+    )
+
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL"
+    )
+
+    MODEL_NAME = os.getenv(
+        "MODEL_NAME",
+        "llama-3.3-70b-versatile"
+    )
+
+
+settings = Settings()
