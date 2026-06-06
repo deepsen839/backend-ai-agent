@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.db.models import Escalation
+from db.models import Escalation
 
 
 def flag_for_human(

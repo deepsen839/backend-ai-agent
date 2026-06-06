@@ -2,9 +2,9 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from app.memory.base import MemoryStore
+from memory.base import MemoryStore
 
-from app.db.models import (
+from db.models import (
     ChatSession,
     Conversation,
     MemoryFact

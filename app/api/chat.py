@@ -3,19 +3,19 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from app.db.database import (
+from db.database import (
     get_db
 )
 
-from app.models.requests import (
+from models.requests import (
     ChatRequest
 )
 
-from app.services.chat_service import (
+from services.chat_service import (
     ChatService
 )
 
-from app.memory.sqlite_memory import (
+from memory.sqlite_memory import (
     SQLiteMemory
 )
 

@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.agents.evaluator import (
+from agents.evaluator import (
     Evaluator
 )
 
-from app.db.models import (
+from db.models import (
     EvalLog
 )
 

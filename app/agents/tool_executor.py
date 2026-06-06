@@ -2,11 +2,11 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.tools.search_catalog import (
+from tools.search_catalog import (
     search_catalog
 )
 
-from app.tools.get_user_memory import (
+from tools.get_user_memory import (
     get_user_memory
 )
 

@@ -2,16 +2,16 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.core.llm import (
+from core.llm import (
     client,
     MODEL_NAME
 )
 
-from app.agents.tool_definitions import (
+from agents.tool_definitions import (
     TOOLS
 )
 
-from app.agents.tool_executor import (
+from agents.tool_executor import (
     execute_tool
 )
 

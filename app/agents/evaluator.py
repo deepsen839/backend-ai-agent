@@ -1,6 +1,6 @@
 import json
 
-from app.core.llm import (
+from core.llm import (
     client,
     MODEL_NAME
 )

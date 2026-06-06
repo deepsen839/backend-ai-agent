@@ -8,7 +8,7 @@ from sqlalchemy import DateTime
 
 from datetime import datetime
 
-from app.db.database import Base
+from db.database import Base
 
 
 class ChatSession(Base):

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.memory.sqlite_memory import (
+from memory.sqlite_memory import (
     SQLiteMemory
 )
 

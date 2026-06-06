@@ -4,11 +4,11 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.db.database import (
+from db.database import (
     get_db
 )
 
-from app.db.models import (
+from db.models import (
     EvalLog
 )
 

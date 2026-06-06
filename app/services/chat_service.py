@@ -1,26 +1,26 @@
 from sqlalchemy.orm import Session
 
-from app.agents.sales_agent import (
+from agents.sales_agent import (
     SalesAgent
 )
 
-from app.services.eval_service import (
+from services.eval_service import (
     EvalService
 )
 
-from app.services.session_service import (
+from services.session_service import (
     SessionService
 )
 
-from app.memory.sqlite_memory import (
+from memory.sqlite_memory import (
     SQLiteMemory
 )
 
-from app.tools.memory_extractor import (
+from tools.memory_extractor import (
     extract_memory_fact
 )
 
-from app.tools.flag_for_human import (
+from tools.flag_for_human import (
     flag_for_human
 )
 
