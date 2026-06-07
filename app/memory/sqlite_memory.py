@@ -81,7 +81,7 @@ class SQLiteMemory(MemoryStore):
                 Conversation.user_id == user_id
             )
             .order_by(
-                Conversation.created_at.asc()
+                Conversation.created_at.desc()
             )
             .all()
         )
