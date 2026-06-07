@@ -314,6 +314,110 @@ For production I would replace this with:
 
 ---
 
+# Tradeoffs
+
+## Database Choice
+
+The current implementation uses SQLite for simplicity, portability, and ease of deployment.
+
+Advantages:
+
+* Lightweight and easy to configure
+* No external database dependency
+* Suitable for demos and take-home assignments
+* Fast local development setup
+
+Tradeoffs:
+
+* Limited support for concurrent writes
+* Not ideal for horizontally scaled deployments
+* Data persistence depends on container storage configuration
+* Production systems should migrate to PostgreSQL
+
+For production, I would replace SQLite with PostgreSQL while keeping the same memory abstraction layer.
+
+---
+
+## Memory Strategy
+
+The system stores every user and assistant message individually.
+
+Advantages:
+
+* Complete conversation history is preserved
+* Easy debugging and auditing
+* Straightforward retrieval implementation
+
+Tradeoffs:
+
+* Conversation history grows indefinitely
+* Prompt size increases over time
+* Retrieval becomes more expensive for long conversations
+
+For production, I would implement memory summarization and vector-based memory retrieval to reduce context size while preserving important information.
+
+---
+
+## Catalog Search
+
+The current implementation uses Sentence Transformers and FAISS for semantic retrieval.
+
+Advantages:
+
+* Fast similarity search
+* Better than simple keyword matching
+* Easily extensible to larger catalogs
+
+Tradeoffs:
+
+* Embedding quality impacts retrieval quality
+* Small catalogs may not require vector search
+* Additional memory and startup overhead
+
+For larger product catalogs, I would use a dedicated vector database such as Pinecone, Weaviate, or pgvector.
+
+---
+
+## Evaluation Strategy
+
+The system uses LLM-based self-evaluation.
+
+Advantages:
+
+* Easy to implement
+* Low infrastructure complexity
+* Produces structured evaluation data
+
+Tradeoffs:
+
+* Not fully independent from the generation model
+* Can overestimate answer quality
+* Scores are heuristic rather than objective
+
+For production deployments, I would replace this with RAGAS, DeepEval, TruLens, or a dedicated evaluator model.
+
+---
+
+## Deployment Strategy
+
+The application is deployed using Railway and Docker.
+
+Advantages:
+
+* Simple deployment workflow
+* Reproducible environments
+* Minimal infrastructure management
+
+Tradeoffs:
+
+* Limited control compared to Kubernetes
+* Less flexibility for large-scale deployments
+* SQLite storage may not persist across infrastructure changes
+
+For production environments, I would deploy using PostgreSQL, Redis, managed observability, and container orchestration.
+
+---
+
 # Product Catalog
 
 ```json
@@ -355,38 +459,11 @@ For production I would replace this with:
 
 # API Endpoints
 
-## POST /chat/{user_id}
-
-Send a message and receive:
-
-* Response
-* Evaluation block
-* Tools called
-* Session ID
-
----
-
-## GET /chat/{user_id}/history
-
-Retrieve full conversation history.
-
----
-
-## DELETE /chat/{user_id}/memory
-
-Delete all user memory.
-
----
-
-## GET /catalog
-
-Retrieve product catalog.
-
----
-
-## GET /health
-
-Health check endpoint.
+* POST `/chat/{user_id}`
+* GET `/chat/{user_id}/history`
+* DELETE `/chat/{user_id}/memory`
+* GET `/catalog`
+* GET `/health`
 
 ---
 
@@ -420,18 +497,8 @@ Health check endpoint.
 curl -X POST \
 "https://selfless-growth-production-aa22.up.railway.app/chat/demo-user" \
 -H "Content-Type: application/json" \
--d '{
-  "message":"What is Enterprise pricing?"
-}'
+-d '{"message":"What is Enterprise pricing?"}'
 ```
-
-Expected response:
-
-```text
-Enterprise costs $499/month and includes unlimited users, SSO, audit logs, and SLA.
-```
-
----
 
 ## Call 2
 
@@ -439,15 +506,7 @@ Enterprise costs $499/month and includes unlimited users, SSO, audit logs, and S
 curl -X POST \
 "https://selfless-growth-production-aa22.up.railway.app/chat/demo-user" \
 -H "Content-Type: application/json" \
--d '{
-  "message":"Does that include SSO?"
-}'
-```
-
-Expected response:
-
-```text
-Yes. The Enterprise plan includes SSO.
+-d '{"message":"Does that include SSO?"}'
 ```
 
 The second request demonstrates persistent cross-session memory because the user does not repeat the Enterprise plan name.
@@ -460,21 +519,15 @@ The second request demonstrates persistent cross-session memory because the user
 
 ```bash
 cd app
-
 pip install -r requirements.txt
-
 uvicorn main:app --reload
 ```
-
----
 
 ## Frontend
 
 ```bash
 cd frontend
-
 npm install
-
 npm run dev
 ```
 
@@ -493,6 +546,20 @@ https://selfless-growth-production-aa22.up.railway.app/
 Railway
 
 https://blissful-elegance-production-bb99.up.railway.app/
+
+---
+
+# CI/CD
+
+GitHub Actions is used for automated build and deployment workflows.
+
+Pipeline:
+
+1. Push code to GitHub
+2. GitHub Actions validates the project
+3. Railway builds Docker images
+4. Railway deploys updated services
+5. Updated application becomes available through the public URLs
 
 ---
 
