@@ -84,94 +84,83 @@ function ChatPage() {
     }
   };
 
-  return (
+return (
+  <div
+    style={{
+      padding: "2rem",
+      maxWidth: "1000px",
+      margin: "0 auto"
+    }}
+  >
+    <h1>Persistent Sales Assistant</h1>
+
+    <input
+      value={userId}
+      onChange={(e) =>
+        setUserId(e.target.value)
+      }
+      placeholder="User ID"
+    />
+
+    <br />
+    <br />
+
+    {/* Chat History */}
     <div
       style={{
-        padding: "2rem",
-        maxWidth: "1000px",
-        margin: "0 auto"
+        height: "500px",
+        overflowY: "auto",
+        border: "1px solid #ccc",
+        padding: "10px",
+        marginBottom: "20px"
       }}
     >
-      <h1>
-        Persistent Sales Assistant
-      </h1>
+      {messages.map((msg, idx) => (
+        <div key={idx}>
+          <h3>{msg.role}</h3>
 
-      <input
-        value={userId}
-        onChange={(e) =>
-          setUserId(
-            e.target.value
-          )
-        }
-        placeholder="User ID"
-      />
+          <p>{msg.content}</p>
 
-      <br />
-      <br />
+          {msg.eval && (
+            <>
+              <h4>Evaluation</h4>
 
-      <textarea
-        rows={4}
-        cols={80}
-        value={message}
-        onChange={(e) =>
-          setMessage(
-            e.target.value
-          )
-        }
-        placeholder="Type your message..."
-      />
+              <pre>
+                {JSON.stringify(
+                  msg.eval,
+                  null,
+                  2
+                )}
+              </pre>
+            </>
+          )}
 
-      <br />
-      <br />
-
-      <button
-        onClick={sendMessage}
-      >
-        Send
-      </button>
-
-      <hr />
-
-      {messages.map(
-        (msg, idx) => (
-          <div
-            key={idx}
-            style={{
-              marginBottom: "20px"
-            }}
-          >
-            <h3>
-              {msg.role}
-            </h3>
-
-            <p>
-              {msg.content}
-            </p>
-
-            {msg.eval && (
-              <>
-                <h4>
-                  Evaluation
-                </h4>
-
-                <pre>
-                  {JSON.stringify(
-                    msg.eval,
-                    null,
-                    2
-                  )}
-                </pre>
-              </>
-            )}
-
-            <hr />
-          </div>
-        )
-      )}
+          <hr />
+        </div>
+      ))}
 
       <div ref={bottomRef}></div>
     </div>
-  );
+
+    {/* Input Area */}
+    <textarea
+      rows={4}
+      cols={80}
+      value={message}
+      onChange={(e) =>
+        setMessage(e.target.value)
+      }
+      placeholder="Type your message..."
+    />
+
+    <br />
+    <br />
+
+    <button onClick={sendMessage}>
+      Send
+    </button>
+  </div>
+);
 }
 
 export default ChatPage;
