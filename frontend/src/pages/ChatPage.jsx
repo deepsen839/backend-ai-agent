@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 
 function ChatPage() {
@@ -11,9 +11,17 @@ function ChatPage() {
   const [messages, setMessages] =
     useState([]);
 
+  const bottomRef = useRef(null);
+
   useEffect(() => {
     loadHistory();
   }, [userId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }, [messages]);
 
   const loadHistory = async () => {
     try {
@@ -22,7 +30,14 @@ function ChatPage() {
           `/chat/${userId}/history`
         );
 
-      setMessages(response.data);
+      const sortedMessages =
+        response.data.sort(
+          (a, b) =>
+            new Date(a.created_at) -
+            new Date(b.created_at)
+        );
+
+      setMessages(sortedMessages);
 
     } catch (err) {
       console.error(err);
@@ -40,7 +55,9 @@ function ChatPage() {
       const response =
         await api.post(
           `/chat/${userId}`,
-          { message }
+          {
+            message
+          }
         );
 
       setMessages((prev) => [
@@ -61,7 +78,9 @@ function ChatPage() {
       setMessage("");
 
     } catch (err) {
+
       console.error(err);
+
     }
   };
 
@@ -80,7 +99,9 @@ function ChatPage() {
       <input
         value={userId}
         onChange={(e) =>
-          setUserId(e.target.value)
+          setUserId(
+            e.target.value
+          )
         }
         placeholder="User ID"
       />
@@ -97,6 +118,7 @@ function ChatPage() {
             e.target.value
           )
         }
+        placeholder="Type your message..."
       />
 
       <br />
@@ -112,7 +134,12 @@ function ChatPage() {
 
       {messages.map(
         (msg, idx) => (
-          <div key={idx}>
+          <div
+            key={idx}
+            style={{
+              marginBottom: "20px"
+            }}
+          >
             <h3>
               {msg.role}
             </h3>
@@ -141,6 +168,8 @@ function ChatPage() {
           </div>
         )
       )}
+
+      <div ref={bottomRef}></div>
     </div>
   );
 }
