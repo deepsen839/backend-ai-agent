@@ -4,12 +4,12 @@ A production-style AI Sales Assistant built with FastAPI, React, Groq, SQLite, F
 
 The assistant:
 
-* Answers questions using a product catalog
+* Understands a SaaS product catalog
 * Maintains persistent memory across sessions
-* Uses tools instead of relying solely on LLM knowledge
-* Produces a self-evaluation score for every response
-* Exposes REST APIs for frontend integration
-* Supports deployment on Railway
+* Uses real tools instead of relying on raw LLM knowledge
+* Generates a self-evaluation score for every response
+* Provides REST APIs for frontend integration
+* Is deployed on Railway
 
 ---
 
@@ -17,15 +17,23 @@ The assistant:
 
 ## Frontend
 
-https://blissful-elegance-production-bb99.up.railway.app
+https://blissful-elegance-production-bb99.up.railway.app/
 
 ## Backend
 
-https://selfless-growth-production-aa22.up.railway.app
+https://selfless-growth-production-aa22.up.railway.app/
+
+## API Documentation
+
+https://selfless-growth-production-aa22.up.railway.app/docs
+
+## Health Check
+
+https://selfless-growth-production-aa22.up.railway.app/health
 
 ---
 
-# Architecture
+# Architecture Diagram
 
 ```text
 User
@@ -34,16 +42,19 @@ User
 POST /chat/{user_id}
  │
  ▼
+FastAPI Route
+ │
+ ▼
 Chat Service
  │
  ▼
 Sales Agent
  │
- ├── get_user_memory(user_id)
- │
  ├── search_catalog(query)
  │
- └── flag_for_human(reason)
+ ├── get_user_memory(user_id)
+ │
+ └── flag_for_human(user_id, reason)
  │
  ▼
 Groq LLM
@@ -52,43 +63,109 @@ Groq LLM
 Response Generation
  │
  ▼
-Eval Service
+Evaluation Service
  │
- ├── Groundedness Score
+ ├── Groundedness
  │
- ├── Relevance Score
+ ├── Relevance
  │
- ├── Confidence Score
+ ├── Confidence
  │
- └── Flag Decision
- │
- ▼
-Persist Conversation
+ └── Flagging
  │
  ▼
-SQLite Database
+SQLite Memory Layer
  │
  ▼
-API Response
+Response Returned
 ```
 
 ---
 
-# Memory Design
+# Project Structure
 
-The application stores conversation history in SQLite using SQLAlchemy.
+```text
+app/
+├── api/
+│   ├── chat.py
+│   ├── catalog.py
+│   └── health.py
+│
+├── agents/
+│   ├── sales_agent.py
+│   └── evaluator.py
+│
+├── memory/
+│   ├── base.py
+│   └── sqlite_memory.py
+│
+├── tools/
+│   ├── search_catalog.py
+│   ├── get_user_memory.py
+│   └── flag_for_human.py
+│
+├── services/
+│   ├── chat_service.py
+│   └── eval_service.py
+│
+├── models/
+│   ├── requests.py
+│   └── responses.py
+│
+├── db/
+│   ├── database.py
+│   └── models.py
+│
+├── catalog.json
+├── main.py
+└── requirements.txt
+```
 
-Each message is stored with:
+---
+
+# Memory Design Decision
+
+## Requirement
+
+The assignment requires:
+
+* Persistent cross-session memory
+* Database-backed storage
+* No in-memory dictionaries
+
+## Implementation
+
+Conversation history is stored in SQLite using SQLAlchemy.
+
+Each message stores:
 
 * user_id
 * role
 * content
-* timestamp
 * session_id
+* created_at
 
-This allows the assistant to retrieve previous interactions for a user even after browser refreshes, application restarts, or separate API calls.
+Example:
 
-Memory is abstracted behind a dedicated memory layer:
+```text
+user_id      role        content
+------------------------------------------------
+demo-user    user        What is Enterprise pricing?
+demo-user    assistant   Enterprise costs $499/mo
+demo-user    user        Does that include SSO?
+```
+
+Before generating a response, the agent retrieves previous messages using:
+
+```python
+get_user_memory(user_id)
+```
+
+This allows the assistant to maintain context even after browser refreshes or separate API calls.
+
+## Why This Design?
+
+The memory layer is abstracted:
 
 ```text
 memory/
@@ -96,14 +173,23 @@ memory/
 └── sqlite_memory.py
 ```
 
-This design allows future migration to:
+This means switching from SQLite to:
 
 * PostgreSQL
 * Redis
 * Mem0
-* Vector Databases
+* Vector databases
 
-by replacing a single implementation file.
+requires changing only the memory implementation rather than the entire application.
+
+## What I Would Use At Scale
+
+For production systems I would use:
+
+* PostgreSQL for persistence
+* Redis for hot memory caching
+* Mem0 or vector memory for long-term retrieval
+* Conversation summarization for large histories
 
 ---
 
@@ -113,25 +199,66 @@ The assistant uses real callable tools.
 
 ## search_catalog(query)
 
-Searches the SaaS catalog using Sentence Transformers embeddings and FAISS similarity search.
+Purpose:
 
-Used to answer pricing and feature questions.
+* Searches pricing plans
+* Searches features
+* Prevents hallucination
+
+Implementation:
+
+* Sentence Transformers embeddings
+* FAISS vector search
+* Catalog JSON retrieval
+
+Example:
+
+```python
+search_catalog(
+    "Enterprise pricing"
+)
+```
+
+---
 
 ## get_user_memory(user_id)
 
-Retrieves previous user conversations from the database.
+Purpose:
 
-Provides cross-session context.
+* Retrieves previous user conversations
+* Maintains context across sessions
+
+Example:
+
+```python
+get_user_memory(
+    "demo-user"
+)
+```
+
+---
 
 ## flag_for_human(user_id, reason)
 
-Triggers escalation when confidence falls below a threshold.
+Purpose:
+
+* Escalates low-confidence responses
+* Supports future human review workflows
+
+Example:
+
+```python
+flag_for_human(
+    user_id,
+    "confidence below threshold"
+)
+```
 
 ---
 
 # Evaluation Design
 
-Every response is evaluated before being returned.
+Every response includes a structured evaluation block.
 
 Example:
 
@@ -143,82 +270,47 @@ Example:
     "relevance": 0.92,
     "confidence": 0.91,
     "flagged": false,
-    "reasoning": "Response grounded in catalog data."
+    "reasoning": "Response sourced from catalog and user memory."
   }
 }
 ```
 
-Metrics:
+## Metrics
 
-* Groundedness
-* Relevance
-* Confidence
-* Flagged Status
+### Groundedness
+
+Measures how well the response is supported by catalog data.
+
+### Relevance
+
+Measures how well the response answers the user question.
+
+### Confidence
+
+Measures model confidence in correctness.
+
+### Flagged
+
+Triggers escalation when confidence falls below threshold.
+
+---
+
+# Evaluation Limitations
+
+Current implementation uses LLM self-evaluation.
 
 Limitations:
 
-* Uses LLM self-evaluation
-* Scores may be optimistic
 * Not fully independent
+* Can be optimistic
+* May overestimate quality
 
-At scale this would be replaced with:
+For production I would replace this with:
 
 * RAGAS
 * DeepEval
 * TruLens
 * Dedicated evaluator models
-
----
-
-# API Endpoints
-
-## Chat
-
-```http
-POST /chat/{user_id}
-```
-
-Send a message and receive a response with evaluation.
-
----
-
-## History
-
-```http
-GET /chat/{user_id}/history
-```
-
-Retrieve full conversation history.
-
----
-
-## Memory Reset
-
-```http
-DELETE /chat/{user_id}/memory
-```
-
-Delete all user memory.
-
----
-
-## Catalog
-
-```http
-GET /catalog
-```
-
-Retrieve pricing catalog.
-
----
-
-## Health
-
-```http
-GET /health
-```
-
-Service health check.
 
 ---
 
@@ -261,6 +353,65 @@ Service health check.
 
 ---
 
+# API Endpoints
+
+## POST /chat/{user_id}
+
+Send a message and receive:
+
+* Response
+* Evaluation block
+* Tools called
+* Session ID
+
+---
+
+## GET /chat/{user_id}/history
+
+Retrieve full conversation history.
+
+---
+
+## DELETE /chat/{user_id}/memory
+
+Delete all user memory.
+
+---
+
+## GET /catalog
+
+Retrieve product catalog.
+
+---
+
+## GET /health
+
+Health check endpoint.
+
+---
+
+# Example Chat Response
+
+```json
+{
+  "response": "Enterprise costs $499/month and includes unlimited users, SSO, audit logs, and SLA.",
+  "eval": {
+    "groundedness": 0.95,
+    "relevance": 0.93,
+    "confidence": 0.91,
+    "flagged": false,
+    "reasoning": "Response grounded in catalog data and user memory."
+  },
+  "tools_called": [
+    "search_catalog",
+    "get_user_memory"
+  ],
+  "session_id": "9f59c74c-7f8f-4f5c-87cf-b18d4a0f0e13"
+}
+```
+
+---
+
 # Cross-Session Memory Demonstration
 
 ## Call 1
@@ -277,7 +428,7 @@ curl -X POST \
 Expected response:
 
 ```text
-Enterprise costs $499/month and includes SSO, audit logs, SLA, and unlimited users.
+Enterprise costs $499/month and includes unlimited users, SSO, audit logs, and SLA.
 ```
 
 ---
@@ -296,10 +447,52 @@ curl -X POST \
 Expected response:
 
 ```text
-Yes, the Enterprise plan includes SSO.
+Yes. The Enterprise plan includes SSO.
 ```
 
-The second request demonstrates memory continuity because the plan name is not repeated by the user.
+The second request demonstrates persistent cross-session memory because the user does not repeat the Enterprise plan name.
+
+---
+
+# Local Development
+
+## Backend
+
+```bash
+cd app
+
+pip install -r requirements.txt
+
+uvicorn main:app --reload
+```
+
+---
+
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# Deployment
+
+## Backend
+
+Railway
+
+https://selfless-growth-production-aa22.up.railway.app/
+
+## Frontend
+
+Railway
+
+https://blissful-elegance-production-bb99.up.railway.app/
 
 ---
 
@@ -309,10 +502,10 @@ The second request demonstrates memory continuity because the plan name is not r
 
 * FastAPI
 * SQLAlchemy
-* Groq
-* FAISS
-* Sentence Transformers
 * SQLite
+* Groq
+* Sentence Transformers
+* FAISS
 
 ## Frontend
 
@@ -320,11 +513,11 @@ The second request demonstrates memory continuity because the plan name is not r
 * Vite
 * Axios
 
-## DevOps
+## Infrastructure
 
 * Docker
-* GitHub Actions
 * Railway
+* GitHub Actions
 
 ---
 
@@ -332,9 +525,9 @@ The second request demonstrates memory continuity because the plan name is not r
 
 * PostgreSQL production database
 * Redis caching
-* Streaming responses
-* Human review dashboard
 * Memory summarization
+* Human review dashboard
+* RAGAS-based evaluation
 * Multi-agent architecture
-* RAGAS based evaluation
-* OpenTelemetry observability
+* Streaming responses
+* Observability and tracing
