@@ -144,17 +144,27 @@ return (
 
     {/* Input Area */}
     <textarea
-      rows={4}
-      cols={80}
-      value={message}
-      onChange={(e) =>
-        setMessage(e.target.value)
-      }
-      placeholder="Type your message..."
-    />
+  rows={4}
+  cols={80}
+  value={message}
+  onChange={(e) =>
+    setMessage(e.target.value)
+  }
+  placeholder="Type your message..."
+  onKeyDown={(e) => {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey
+    ) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }}
+/>
 
     <br />
     <br />
+
 
     <button onClick={sendMessage}>
       Send
